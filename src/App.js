@@ -2,11 +2,11 @@ import { useState } from "react";
 import "./App.css";
 import axios from "axios";
 
+const unsplashAccessKey = process.env.REACT_APP_UNSPLASH_ACCESS_KEY;
+
 function App() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [img, setImg] = useState(
-    "https://images.unsplash.com/photo-1524024973431-2ad916746881?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0ODAyODd8MHwxfHNlYXJjaHwxfHxnb2F0fGVufDB8fHx8MTY5MDM2OTIyNHww&ixlib=rb-4.0.3&q=80&w=1080"
-  );
+  const [img, setImg] = useState([]);
 
   function handleSearch(event) {
     setSearchQuery(event.target.value);
@@ -14,10 +14,12 @@ function App() {
 
   async function getImage() {
     try {
-      const API = `http://localhost:8090/photos?subject=${searchQuery}`;
+      const API = `https://api.unsplash.com/search/photos/?client_id=${unsplashAccessKey}&query=${encodeURIComponent(
+        searchQuery
+      )}`;
       const res = await axios.get(API);
-      if (res.data.length > 0) {
-        setImg(res.data[0].img_url);
+      if (res.data.results.length > 0) {
+        setImg(res.data.results);
       } else {
         console.log("No images found for the search query.");
       }
@@ -31,7 +33,15 @@ function App() {
       <h1>Find any image</h1>
       <input type="text" placeholder="enter image subject" onChange={handleSearch} />
       <button onClick={getImage}>Explore!</button>
-      {img && <img src={img} alt={searchQuery} />}
+      {img && img.length > 0 ? (
+        <div>
+          {img.map((photo) => (
+            <img key={photo.id} src={photo.urls.small} alt={photo.alt_description} />
+          ))}
+        </div>
+      ) : (
+        img === null ? <p>Enter a search query and click "Explore" to find images.</p> : <p>No images found for the search query.</p>
+      )}
     </div>
   );
 }
